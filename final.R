@@ -6,20 +6,14 @@ library(tidyr)
 library(lubridate)
 library(ggplot2)
 
-rawdata <- read.csv(zstdfile("data/data.csv.zst")) |>
+rawdata <- read.csv(zstdfile("data/new_data.csv.zst")) |>
   mutate(
     Time = ymd_hms(SrcUpdateTime, tz = "Asia/Taipei"),
     Date = date(Time),
     Hour = hour(Time)
   )
-# rawdata <- rawdata |> filter(longitude > 121.5285,
-#                              longitude < 121.5520,
-#                              latitude > 25.0076,
-#                              latitude < 25.0266)
 station_list <- read.csv(zstdfile("data/station.csv.zst")) |>
-  semi_join(rawdata, by = c("sno" = "StationID"))
-
-
+  semi_join(rawdata, by = c("StationUID" = "StationUID"))
 
 data <- rawdata |>
   group_by(UID = StationUID, Date, Hour) |>
@@ -41,13 +35,7 @@ server <- function(input, output, session) {
       maxBounds = list(list(24.97, 121.46), list(25.15, 121.63))
     )) |>
       addTiles() |>
-      setView(121.54, 25.017, zoom = 16) |>
-      addMarkers(
-        lng = station_list$longitude,
-        lat = station_list$latitude,
-        layerId = paste("TPE", station_list$sno, sep = ""),
-        popup = paste(station_list$sna, "<br>TPE", station_list$sno, sep = "")
-      )
+      setView(121.54, 25.017, zoom = 16)
   })
   
   observe({
@@ -57,20 +45,20 @@ server <- function(input, output, session) {
     }
     
     filtered_stations <- station_list |> filter(
-      latitude >= bounds$south,
-      latitude <= bounds$north,
-      longitude >= bounds$west,
-      longitude <= bounds$east
+      Latitude >= bounds$south,
+      Latitude <= bounds$north,
+      Longitude >= bounds$west,
+      Longitude <= bounds$east
     )
     
     leafletProxy("time_heatmap_map") |>
       clearMarkers() |>
       addMarkers(
         data = filtered_stations,
-        lng = ~ longitude,
-        lat = ~ latitude,
-        layerId = paste("TPE", filtered_stations$sno, sep = ""),
-        popup = ~ sna
+        lng = ~ Longitude,
+        lat = ~ Latitude,
+        layerId = ~ StationUID,
+        popup = ~ StationName
       )
   })
   
@@ -83,7 +71,7 @@ server <- function(input, output, session) {
         Hour = 0:23,
         fill = list(Value = NA)
       ) |>
-      mutate(Date_Factor = factor(Date, levels = rev(unique(data$Date))))
+      mutate(Date_Factor = factor(Date, levels = sort(unique(data$Date), decreasing = TRUE)))
     
     g <- ggplot(filtered_data, aes(
       x = Hour + 0.5,
@@ -108,9 +96,9 @@ server <- function(input, output, session) {
       labs(
         title = station_list |>
           filter(
-            paste0("TPE", sno) == input$time_heatmap_map_marker_click$id
+            StationUID == input$time_heatmap_map_marker_click$id
           ) |>
-          pull(sna),
+          pull(StationName),
         x = "時間",
         y = "日期"
       ) +
@@ -126,18 +114,18 @@ server <- function(input, output, session) {
       theme(
         plot.title = element_text(
           hjust = 0.5,
-          size = 16,
+          size = 24,
           face = "bold"
         ),
-        axis.title = element_text(size = 12),
+        axis.title = element_text(size = 14),
         axis.text.y = element_text(angle = 0, hjust = 1),
         legend.position = "right",
-        legend.title = element_text(face = "bold"),
+        legend.title = element_text(face = "bold", size = 14),
         legend.ticks = element_line(color = "black"),
         legend.ticks.length = unit(c(-4, 0), "points")
       )
     g
-  }, width = 720, height = 240) |>
+  }, width = 720, height = 800) |> # height = 240 for 7-day data
     bindEvent(input$time_heatmap_map_marker_click)
 }
 
