@@ -6,13 +6,13 @@ library(tidyr)
 library(lubridate)
 library(ggplot2)
 
-rawdata <- read.csv(zstdfile("data/new_data.csv.zst")) |>
+rawdata <- read.csv(zstdfile("../data/new_data.csv.zst")) |>
   mutate(
     Time = ymd_hms(SrcUpdateTime, tz = "Asia/Taipei"),
     Date = date(Time),
     Hour = hour(Time)
   )
-station_list <- read.csv(zstdfile("data/station.csv.zst")) |>
+station_list <- read.csv(zstdfile("../data/station.csv.zst")) |>
   semi_join(rawdata, by = c("StationUID" = "StationUID"))
 
 data <- rawdata |>
