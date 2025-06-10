@@ -35,7 +35,7 @@ data <- data |>
 
 station_info <- read.csv("../data/station_base_info.csv")
 station_info2 <- read.csv("../data/station_base_info_s.csv")
-availability <- read.csv(zstdfile("../data/YouBike_availability_0424-0524.csv.zst")) %>%
+availability <- read.csv(xzfile("../data/YouBike_availability_0424-0524.csv.xz")) %>%
   mutate(UpdateTime = ymd_hms(UpdateTime, tz = "Asia/Taipei"))
 weather <- read.csv(xzfile("../data/Weather_0424-0524.csv.xz")) %>%
   filter(Temp != -99, HUMD != -99) %>%
