@@ -10,7 +10,7 @@ library(scales)
 
 # ---
 
-data <- read.csv(zstdfile("../data/YouBike_availability_0424-0524.csv.zst")) |>
+data <- read.csv(xzfile("../data/YouBike_availability_0424-0524.csv.xz")) |>
   mutate(
     Time = ymd_hms(SrcUpdateTime, tz = "Asia/Taipei"),
     Date = date(Time),
